@@ -63,6 +63,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // ─── Toasts ───
+    const toastContainer = document.getElementById('toast-container');
+    const createToast = (message, type = 'loading') => {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+
+        let iconHtml = '';
+        if (type === 'success') iconHtml = '<i class="ph ph-check-circle toast-icon"></i>';
+        else if (type === 'error') iconHtml = '<i class="ph ph-x-circle toast-icon"></i>';
+        else if (type === 'warning') iconHtml = '<i class="ph ph-warning toast-icon"></i>';
+        else iconHtml = '<i class="ph ph-spinner ph-spin toast-icon"></i>'; // loading
+
+        toast.innerHTML = `${iconHtml}<span>${message}</span>`;
+        toastContainer.appendChild(toast);
+
+        // Trigger reflow for slide-in animation
+        toast.offsetHeight;
+        toast.classList.add('show');
+
+        const removeToast = () => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        };
+
+        // Auto remove non-loading toasts
+        if (type !== 'loading') {
+            setTimeout(removeToast, 4000);
+        }
+
+        return removeToast;
+    };
+
+    // ─── API Wrapper (with retry) ───
+    const fetchWithRetry = async (url, retries = 2) => {
+        for (let i = 0; i <= retries; i++) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) {
+                    if (res.status >= 400 && res.status < 500) throw new Error('API_ERROR_CLIENT');
+                    throw new Error('NETWORK_ERROR');
+                }
+                return await res.json();
+            } catch (err) {
+                if (i === retries) throw err;
+                // Wait briefly before retrying (e.g. for proxy to wake up)
+                await new Promise(resolve => setTimeout(resolve, i === 0 ? 1000 : 2000));
+            }
+        }
+    };
+
     // ─── Keyword Validation & Dictionary ───
     const synonymDict = {
         'のみほうだい': '飲み放題', 'のみほ': '飲み放題',
@@ -77,18 +127,16 @@ document.addEventListener('DOMContentLoaded', () => {
         'ふれんち': 'フレンチ'
     };
 
-    const checkKeywordValidity = async (keyword) => {
+    const checkKeywordValidity = async (keyword, toastUpdater) => {
         const apiKey = 'f15b7ad9efab6381';
         const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}&format=json&count=1`;
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
         try {
-            const res = await fetch(proxyUrl);
-            if (!res.ok) return true; // Fail silently if proxy is down
-            const data = await res.json();
+            const data = await fetchWithRetry(proxyUrl, 1);
             return data.results && data.results.shop && data.results.shop.length > 0;
         } catch (e) {
-            return true;
+            return true; // Fail silently
         }
     };
 
@@ -97,8 +145,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (parts.length === 0) return;
 
         reqInput.value = ''; // clear early
-        autoSearchBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> ワード確認中...';
+        autoSearchBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> API準備中...';
         autoSearchBtn.disabled = true;
+
+        let removeToast = null;
+        if (parts.length > 0) {
+            removeToast = createToast('キーワードの有効性をチェック中...', 'loading');
+        }
 
         for (const cleanVal of parts) {
             const isValid = await checkKeywordValidity(cleanVal);
@@ -119,6 +172,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         autoSearchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i> 条件に合うお店を自動検索';
         autoSearchBtn.disabled = false;
+        if (removeToast) {
+            removeToast();
+            createToast('キーワードを追加しました', 'success');
+        }
         renderTags(requests, reqList, 'req');
     };
 
@@ -263,15 +320,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         autoSearchBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> 検索中...';
         autoSearchBtn.disabled = true;
+        const removeToast = createToast('中継サーバーを利用して店舗データを取得中...', 'loading');
 
         try {
-            const response = await fetch(proxyUrl);
-            if (!response.ok) {
-                if (response.status >= 400 && response.status < 500) throw new Error('API_ERROR_CLIENT');
-                throw new Error('NETWORK_ERROR');
-            }
-
-            const data = await response.json();
+            const data = await fetchWithRetry(proxyUrl, 2);
             if (data.results && data.results.error) throw new Error('API_ERROR_RESPONSE');
 
             if (data.results && data.results.shop && data.results.shop.length > 0) {
@@ -279,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let filteredShops = data.results.shop.filter(shop => {
                     const text = (shop.name + (shop.address || '') + (shop.catch || '') + (shop.station_name || '')).toLowerCase();
-                    if (ngs.length > 0 && ngs.some(ng => text.includes(ng.toLowerCase()))) return false;
                     if (isYokohamaSearch && text.includes('新横浜')) return false;
                     if (isClientSideBudgetFilter && shop.budget && shop.budget.code && !selectedCodes.includes(shop.budget.code)) return false;
                     return true;
@@ -338,9 +389,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error.message === 'API_ERROR_CLIENT' || error.message === 'API_ERROR_RESPONSE') {
                 alert('検索条件に誤りがあるか、条件が複雑すぎてAPIエラーになりました。（予算の上限・下限の幅を広げるか、キーワードを減らしてみてください）');
             } else {
-                alert('通信エラーが発生しました。インターネット接続を確認してください。\n（※ローカルファイルからの場合はWebサーバー経由でお試しください）');
+                alert('通信エラー（タイムアウトなど）が発生しました。インターネット接続を確認して再試行してください。\n数回繰り返すとつながる場合があります。');
             }
         } finally {
+            removeToast();
             autoSearchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i> 条件に合うお店を自動検索';
             autoSearchBtn.disabled = false;
         }
@@ -575,12 +627,13 @@ document.addEventListener('DOMContentLoaded', () => {
         manualApiResults.innerHTML = '';
         manualApiResults.classList.add('hidden');
 
+        const removeToast = createToast('手動追加用の店舗を検索中...', 'loading');
+
         try {
             const apiKey = 'f15b7ad9efab6381';
             const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}&format=json&count=5`;
             const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
-            const res = await fetch(proxyUrl);
-            const data = await res.json();
+            const data = await fetchWithRetry(proxyUrl, 1);
             if (data.results && data.results.shop && data.results.shop.length > 0) {
                 data.results.shop.forEach(shop => {
                     const li = document.createElement('li');
@@ -604,6 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             alert('検索中にエラーが発生しました。ネットワーク接続を確認してください。');
         } finally {
+            removeToast();
             manualApiBtn.innerHTML = '検索';
         }
     });
