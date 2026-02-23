@@ -607,25 +607,35 @@ body {
 }
 
 .inline-plan-form {
-  display: flex;
+  display: grid;
+  grid-template-columns: 2fr 1fr 34px;
   gap: 0.4rem;
   margin-top: 0.5rem;
-  align-items: center;
-  flex-wrap: nowrap;
+  align-items: stretch;
 }
 
 .inline-plan-form input {
+  width: 100%;
+  min-width: 0;
   padding: 0.4rem 0.5rem;
   font-size: 0.8rem;
-  min-width: 0;
-  /* Prevent overflow */
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-main);
+  transition: all 0.2s;
+}
+
+.inline-plan-form input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 .inline-plan-form .icon-btn {
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  flex-shrink: 0;
+  width: 34px;
+  height: auto;
+  min-width: auto;
 }
 
 /* ─── Toggle Switch ─── */
