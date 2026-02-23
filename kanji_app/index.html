@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幹事スマートアシスト</title>
+  <meta name="description" content="飲み会の幹事のための候補店管理・条件チェックツール">
+  <link rel="stylesheet" href="styles.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1><i class="ph ph-champagne"></i> 幹事スマートアシスト</h1>
+      <p>飲み会の候補店・条件を一元管理</p>
+    </header>
+
+    <main class="main-content">
+      <!-- Left Panel -->
+      <section class="panel side-panel">
+        <h2><i class="ph ph-notebook"></i> 条件・メモ</h2>
+
+        <div class="form-group">
+          <label for="general-memo">全体メモ</label>
+          <textarea id="general-memo" placeholder="例: 10人参加予定、金曜19時開始希望..."></textarea>
+        </div>
+
+        <div class="condition-section">
+          <h3><i class="ph ph-star"></i> 必須条件・希望</h3>
+          <div class="input-group">
+            <input type="text" id="request-input" placeholder="例: 個室あり, 飲み放題, 新宿">
+            <button id="add-request-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="request-list" class="tag-list"></ul>
+        </div>
+
+        <div class="condition-section">
+          <h3><i class="ph ph-warning-circle"></i> NG・アレルギー</h3>
+          <div class="input-group">
+            <input type="text" id="ng-input" placeholder="例: エビ, 辛いもの">
+            <button id="add-ng-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="ng-list" class="tag-list danger-tags"></ul>
+        </div>
+
+        <div class="condition-section">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3><i class="ph ph-users-three"></i> 参加者リスト</h3>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-participants">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="participants-container" class="hidden">
+            <div class="input-group" style="margin-top: 0.5rem;">
+              <input type="text" id="participant-name-input" placeholder="名前">
+              <input type="text" id="participant-note-input" placeholder="メモ (任意)">
+              <button id="add-participant-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+            </div>
+            <ul id="participant-list" class="participant-list"></ul>
+          </div>
+        </div>
+
+        <button id="auto-search-btn" class="search-btn">
+          <i class="ph ph-magnifying-glass"></i> 条件に合うお店を自動検索
+        </button>
+      </section>
+
+      <!-- Right Panel -->
+      <section class="main-panel">
+        <div class="panel panel-header">
+          <h2><i class="ph ph-storefront"></i> 候補店リスト</h2>
+          <button id="add-restaurant-btn" class="primary-btn"><i class="ph ph-plus"></i> 手動で追加</button>
+        </div>
+
+        <div id="restaurant-list" class="restaurant-grid"></div>
+
+        <div id="empty-state" class="empty-state">
+          <i class="ph ph-wine"></i>
+          <p>候補店がまだありません。<br>手動で追加するか、条件を入力して自動検索してみましょう。</p>
+        </div>
+
+        <div class="api-credit">
+          Powered by <a href="http://webservice.recruit.co.jp/" target="_blank">ホットペッパーグルメ Webサービス</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="restaurant-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>候補店を追加</h3>
+        <button id="close-modal-btn" class="icon-btn"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>店名 *</label>
+          <input type="text" id="rest-name" placeholder="お店の名前">
+        </div>
+        <div class="form-group">
+          <label>URL (任意)</label>
+          <input type="url" id="rest-url" placeholder="https://...">
+        </div>
+        <div class="form-group-row">
+          <div class="form-group" style="flex:1">
+            <label>予算目安</label>
+            <input type="text" id="rest-price" placeholder="例: ¥4,000">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>特徴・ジャンル</label>
+            <input type="text" id="rest-feature" placeholder="例: 和食, 景色が良い">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>アクセス・最寄駅</label>
+          <input type="text" id="rest-access" placeholder="例: 新宿駅東口から徒歩3分">
+        </div>
+        <div class="form-group">
+          <label>プラン (任意)</label>
+          <div class="input-group">
+            <input type="text" id="plan-name-input" placeholder="プラン名">
+            <input type="text" id="plan-price-input" placeholder="料金" style="max-width: 120px;">
+            <button id="add-plan-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="modal-plan-list" class="plan-list"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-restaurant-btn" class="primary-btn">保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
