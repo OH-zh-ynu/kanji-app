@@ -687,22 +687,32 @@ body {
   align-items: stretch;
 }
 
-.inline-plan-form input {
+input,
+select,
+textarea {
   width: 100%;
-  min-width: 0;
-  padding: 0.4rem 0.5rem;
-  font-size: 0.8rem;
-  border-radius: var(--radius-sm);
+  padding: 0.6rem;
   border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   background: var(--bg);
-  color: var(--text-main);
+  color: var(--text);
+  font-family: inherit;
   transition: all 0.2s;
 }
 
-.inline-plan-form input:focus {
+input[readonly],
+textarea[readonly] {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .inline-plan-form .icon-btn {
@@ -941,6 +951,30 @@ input:checked+.slider:before {
 
 .empty-state p {
   font-size: 0.9rem;
+}
+
+/* ─── Readonly Mode (Shared View) ─── */
+body.readonly-mode .side-panel {
+  display: none !important;
+}
+
+body.readonly-mode .main-content {
+  grid-template-columns: 1fr;
+}
+
+body.readonly-mode .main-panel {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+body.readonly-mode .rest-actions,
+body.readonly-mode .inline-plan-form,
+body.readonly-mode .delete-plan-btn,
+body.readonly-mode .plan-star-btn,
+body.readonly-mode #add-restaurant-btn,
+body.readonly-mode #share-btn,
+body.readonly-mode .rest-check-section {
+  display: none !important;
 }
 
 /* ─── Mobile ─── */

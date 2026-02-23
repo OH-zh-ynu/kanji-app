@@ -127,7 +127,10 @@
           <div style="display:flex; align-items:center; gap:1rem;">
             <h2><i class="ph ph-storefront"></i> 候補店リスト</h2>
           </div>
-          <button id="add-restaurant-btn" class="primary-btn"><i class="ph ph-plus"></i> 手動で追加</button>
+          <div style="display:flex; gap:0.5rem;">
+            <button id="share-btn" class="secondary-btn"><i class="ph ph-share-network"></i> 共有する</button>
+            <button id="add-restaurant-btn" class="primary-btn"><i class="ph ph-plus"></i> 手動で追加</button>
+          </div>
         </div>
 
         <div id="restaurant-list" class="restaurant-grid"></div>
@@ -222,6 +225,44 @@
       </div>
       <div class="modal-footer">
         <button id="add-selected-results-btn" class="primary-btn">選択した店舗を追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div id="share-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3><i class="ph ph-share-network"></i> 店舗・プランの共有</h3>
+        <button id="close-share-modal" class="icon-btn" style="width:28px;height:28px;min-width:28px;border:none;"><i
+            class="ph ph-x"></i></button>
+      </div>
+      <div class="modal-body" style="gap:1.5rem;">
+        <p style="font-size:0.9rem; color:var(--text-muted); margin:0;">
+          お気に入り（<i class="ph-fill ph-star" style="color:var(--primary)"></i>）をつけた候補店とプランの共有方法を選んでください。
+        </p>
+
+        <div class="share-option">
+          <h4><i class="ph ph-copy"></i> テキストとしてコピー</h4>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem;">LINEやSlackに貼り付けて送るのに最適です。</p>
+          <textarea id="share-text-output" readonly
+            style="width:100%; height:120px; font-size:0.8rem; padding:0.5rem;"></textarea>
+          <button id="copy-share-text-btn" class="secondary-btn"
+            style="width:100%; justify-content:center; margin-top:0.5rem;"><i class="ph ph-clipboard"></i>
+            テキストをコピー</button>
+        </div>
+
+        <div class="share-option" style="border-top:1px solid var(--border-light); padding-top:1.5rem;">
+          <h4><i class="ph ph-link"></i> Webページとして共有（おすすめ）</h4>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem;">
+            見やすい「閲覧専用ページ」のURLを発行します。<br>
+            ※参加者には細かい条件（マトリクス等）は見えません。
+          </p>
+          <input type="text" id="share-url-output" readonly style="width:100%; font-size:0.8rem; padding:0.5rem;">
+          <button id="copy-share-url-btn" class="primary-btn"
+            style="width:100%; justify-content:center; margin-top:0.5rem;"><i class="ph ph-clipboard-text"></i>
+            URLをコピー</button>
+        </div>
       </div>
     </div>
   </div>

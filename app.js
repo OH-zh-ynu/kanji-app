@@ -36,6 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const manualApiSearch = document.getElementById('manual-api-search');
     const manualApiBtn = document.getElementById('manual-api-btn');
     const manualApiResults = document.getElementById('manual-api-results');
+
+    // Share DOM
+    const shareBtn = document.getElementById('share-btn');
+    const shareModal = document.getElementById('share-modal');
+    const closeShareModal = document.getElementById('close-share-modal');
+    const shareTextOutput = document.getElementById('share-text-output');
+    const copyShareTextBtn = document.getElementById('copy-share-text-btn');
+    const shareUrlOutput = document.getElementById('share-url-output');
+    const copyShareUrlBtn = document.getElementById('copy-share-url-btn');
+
     const resultsModal = document.getElementById('results-modal');
     const closeResultsBtn = document.getElementById('close-results-btn');
     const resultsPreviewList = document.getElementById('results-preview-list');
@@ -67,11 +77,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const generateId = () => Math.random().toString(36).substring(2, 9);
 
+    // ─── Initialization & Readonly Check ───
+    const urlParams = new URLSearchParams(window.location.search);
+    const shareData = urlParams.get('share');
+    let isReadonly = false;
+    if (shareData) {
+        try {
+            const decoded = JSON.parse(decodeURIComponent(escape(atob(shareData))));
+            restaurants = decoded;
+            document.body.classList.add('readonly-mode');
+            isReadonly = true;
+        } catch (e) {
+            console.error('Failed to parse share data', e);
+        }
+    }
+
     // ─── Empty State ───
     const updateEmptyState = () => {
-        if (emptyState) {
-            emptyState.style.display = restaurants.length === 0 ? 'block' : 'none';
-        }
+        const isEmpty = restaurants.length === 0;
+        emptyState.style.display = isEmpty && !isReadonly ? 'block' : 'none';
+        restList.style.display = isEmpty ? 'none' : 'grid';
     };
 
     // ─── Toasts ───
@@ -793,6 +818,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ─── Sharing Logic ───
+    const getShareData = () => {
+        return restaurants.filter(r => r.isFavorite || (r.plans && r.plans.some(p => p.isFavorite))).map(r => {
+            const favoredPlans = (r.plans || []).filter(p => p.isFavorite);
+            return { ...r, plans: favoredPlans };
+        });
+    };
+
+    const generateShareText = (data) => {
+        if (data.length === 0) return 'お気に入りの店舗・プランがありません。';
+        let text = '🍺 飲み会候補リスト 🍺\n\n';
+        data.forEach((r, i) => {
+            text += `${i + 1}. ${r.name}\n`;
+            if (r.access) text += `📍 アクセス: ${r.access}\n`;
+            if (r.url) text += `🔗 ${r.url}\n`;
+            if (r.plans && r.plans.length > 0) {
+                text += `👑 候補プラン:\n`;
+                r.plans.forEach(p => {
+                    text += `  - ${p.name} ${p.price ? `(${p.price})` : ''}\n`;
+                    if (p.url) text += `    ${p.url}\n`;
+                });
+            }
+            text += '\n';
+        });
+        return text.trim();
+    };
+
+    if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+            const data = getShareData();
+            shareTextOutput.value = generateShareText(data);
+
+            const minData = data.map(r => ({
+                id: r.id, name: r.name, url: r.url, price: r.price, feature: r.feature, access: r.access, isFavorite: r.isFavorite,
+                plans: r.plans.map(p => ({ id: p.id, name: p.name, url: p.url, price: p.price, isFavorite: true }))
+            }));
+
+            try {
+                const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(minData))));
+                const shareUrl = `${window.location.href.split('?')[0]}?share=${encodeURIComponent(base64)}`;
+                shareUrlOutput.value = shareUrl;
+            } catch (e) {
+                console.error(e);
+                shareUrlOutput.value = "URLの生成に失敗しました。";
+            }
+
+            shareModal.classList.remove('hidden');
+        });
+    }
+
+    if (closeShareModal) closeShareModal.addEventListener('click', () => shareModal.classList.add('hidden'));
+
+    if (copyShareTextBtn) {
+        copyShareTextBtn.addEventListener('click', () => {
+            shareTextOutput.select();
+            document.execCommand('copy');
+            createToast('テキストをクリップボードにコピーしました', 'success');
+        });
+    }
+
+    if (copyShareUrlBtn) {
+        copyShareUrlBtn.addEventListener('click', () => {
+            shareUrlOutput.select();
+            document.execCommand('copy');
+            createToast('URLをクリップボードにコピーしました', 'success');
+        });
+    }
+
     // ─── Init (no presets) ───
     updateEmptyState();
+    if (isReadonly) {
+        renderRestaurants();
+    }
 });
