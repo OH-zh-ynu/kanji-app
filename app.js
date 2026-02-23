@@ -4,8 +4,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let manuals = [];
     let ngs = [];
     let restaurants = [];
-    let participants = [];
     let draftPlans = [];
+    // Initialize matrix with example data from user screenshot
+    let matrix = {
+        cols: ['ともき', 'けいすけ', 'ひさき', 'こうし'],
+        rows: ['苦手', 'ビール', '希望'],
+        data: {
+            '0_0': 'きのこ', '0_1': 'ー', '0_2': 'マヨネーズ', '0_3': '貝、きのこ',
+            '1_0': '〜', '1_1': '〜', '1_2': '〇', '1_3': '△',
+            '2_0': '唐揚げ', '2_1': '鍋', '2_2': '(鍋/焼き鳥)', '2_3': 'バターポテト肉寿司'
+        }
+    };
 
     // ─── DOM ───
     const reqInput = document.getElementById('request-input');
@@ -46,12 +55,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalPlanList = document.getElementById('modal-plan-list');
     const generalMemo = document.getElementById('general-memo');
     const autoSearchBtn = document.getElementById('auto-search-btn');
+
+    // Matrix DOM
     const toggleParticipants = document.getElementById('toggle-participants');
     const participantsContainer = document.getElementById('participants-container');
-    const partNameInput = document.getElementById('participant-name-input');
-    const partNoteInput = document.getElementById('participant-note-input');
-    const addPartBtn = document.getElementById('add-participant-btn');
-    const partList = document.getElementById('participant-list');
+    const addMatrixColBtn = document.getElementById('add-matrix-col-btn');
+    const addMatrixRowBtn = document.getElementById('add-matrix-row-btn');
+    const participantMatrix = document.getElementById('participant-matrix');
+    const toggleMatrixPreviewBtn = document.getElementById('toggle-matrix-preview-btn');
+    const matrixPreviewContainer = document.getElementById('matrix-preview-container');
+    const previewMatrixTable = document.getElementById('preview-matrix-table');
+    const closeMatrixPreviewBtn = document.getElementById('close-matrix-preview-btn');
+
     const emptyState = document.getElementById('empty-state');
 
     const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -222,42 +237,143 @@ document.addEventListener('DOMContentLoaded', () => {
     addNgBtn.addEventListener('click', () => addNg(ngInput.value));
     ngInput.addEventListener('keypress', (e) => e.key === 'Enter' && addNg(ngInput.value));
 
-    // ─── Participants ───
+    // ─── Matrix Logic ───
     toggleParticipants.addEventListener('change', (e) => {
         participantsContainer.classList.toggle('hidden', !e.target.checked);
+        if (e.target.checked) {
+            toggleMatrixPreviewBtn.classList.remove('hidden');
+        } else {
+            toggleMatrixPreviewBtn.classList.add('hidden');
+            matrixPreviewContainer.classList.add('hidden');
+        }
     });
 
-    const renderParticipants = () => {
-        partList.innerHTML = '';
-        participants.forEach((p, index) => {
-            const li = document.createElement('li');
-            li.className = 'participant-item';
-            li.innerHTML = `
-                <div class="participant-info">
-                    <span class="participant-name">${p.name}</span>
-                    ${p.note ? `<span class="participant-note">${p.note}</span>` : ''}
-                </div>
-                <button class="icon-btn delete-btn" style="min-width:28px;height:28px;"><i class="ph ph-trash"></i></button>
-            `;
-            li.querySelector('button').addEventListener('click', () => removeParticipant(index));
-            partList.appendChild(li);
+    const updatePreviewMatrix = () => {
+        previewMatrixTable.innerHTML = participantMatrix.innerHTML;
+        // Strip inputs and just show text in preview for cleaner look
+        previewMatrixTable.querySelectorAll('input').forEach(inp => {
+            inp.parentElement.textContent = inp.value;
         });
+        previewMatrixTable.querySelectorAll('button').forEach(btn => btn.remove());
     };
 
-    const addParticipant = (name, note) => {
-        if (!name.trim()) return;
-        participants.push({ name: name.trim(), note: (note || '').trim() });
-        partNameInput.value = '';
-        partNoteInput.value = '';
-        renderParticipants();
-    };
-    const removeParticipant = (idx) => { participants.splice(idx, 1); renderParticipants(); };
+    const renderMatrix = () => {
+        participantMatrix.innerHTML = '';
 
-    addPartBtn.addEventListener('click', () => addParticipant(partNameInput.value, partNoteInput.value));
-    partNameInput.addEventListener('keypress', (e) => e.key === 'Enter' && addParticipant(partNameInput.value, partNoteInput.value));
-    partNoteInput.addEventListener('keypress', (e) => e.key === 'Enter' && addParticipant(partNameInput.value, partNoteInput.value));
+        // Header row
+        const thead = document.createElement('tr');
+        thead.innerHTML = `<th>条件 \\ 名前</th>` + matrix.cols.map((col, idx) => `
+            <th>
+                <input type="text" value="${col}" data-col-idx="${idx}" class="matrix-col-input" placeholder="名前">
+                <button class="col-delete-btn" data-idx="${idx}"><i class="ph ph-trash"></i></button>
+            </th>
+        `).join('');
+        participantMatrix.appendChild(thead);
+
+        // Data rows
+        matrix.rows.forEach((row, rIdx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <th>
+                    <input type="text" value="${row}" data-row-idx="${rIdx}" class="matrix-row-input" placeholder="条件">
+                    <button class="row-delete-btn" data-idx="${rIdx}"><i class="ph ph-trash"></i></button>
+                </th>` + matrix.cols.map((_, cIdx) => `
+                <td>
+                    <input type="text" value="${matrix.data[`${rIdx}_${cIdx}`] || ''}" data-cell="${rIdx}_${cIdx}" class="matrix-cell-input">
+                </td>
+            `).join('');
+            participantMatrix.appendChild(tr);
+        });
+
+        // Event Listeners for inputs
+        participantMatrix.querySelectorAll('.matrix-col-input').forEach(inp => {
+            inp.addEventListener('change', (e) => {
+                matrix.cols[e.target.dataset.colIdx] = e.target.value;
+                updatePreviewMatrix();
+            });
+        });
+        participantMatrix.querySelectorAll('.matrix-row-input').forEach(inp => {
+            inp.addEventListener('change', (e) => {
+                matrix.rows[e.target.dataset.rowIdx] = e.target.value;
+                updatePreviewMatrix();
+            });
+        });
+        participantMatrix.querySelectorAll('.matrix-cell-input').forEach(inp => {
+            inp.addEventListener('change', (e) => {
+                matrix.data[e.target.dataset.cell] = e.target.value;
+                updatePreviewMatrix();
+            });
+        });
+
+        // Event Listeners for deletes
+        participantMatrix.querySelectorAll('.col-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.currentTarget.dataset.idx);
+                matrix.cols.splice(idx, 1);
+                // Shift data columns
+                let newData = {};
+                matrix.rows.forEach((_, r) => {
+                    let newC = 0;
+                    matrix.cols.forEach((_, c) => {
+                        let oldC = c >= idx ? c + 1 : c;
+                        newData[`${r}_${newC}`] = matrix.data[`${r}_${oldC}`];
+                        newC++;
+                    });
+                });
+                matrix.data = newData;
+                renderMatrix();
+            });
+        });
+        participantMatrix.querySelectorAll('.row-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.currentTarget.dataset.idx);
+                matrix.rows.splice(idx, 1);
+                // Shift data rows
+                let newData = {};
+                let newR = 0;
+                matrix.rows.forEach((_, r) => {
+                    let oldR = r >= idx ? r + 1 : r;
+                    matrix.cols.forEach((_, c) => {
+                        newData[`${newR}_${c}`] = matrix.data[`${oldR}_${c}`];
+                    });
+                    newR++;
+                });
+                matrix.data = newData;
+                renderMatrix();
+            });
+        });
+
+        updatePreviewMatrix();
+    };
+
+    addMatrixColBtn.addEventListener('click', () => {
+        matrix.cols.push(`参加者${matrix.cols.length + 1}`);
+        renderMatrix();
+    });
+
+    addMatrixRowBtn.addEventListener('click', () => {
+        matrix.rows.push(`条件${matrix.rows.length + 1}`);
+        renderMatrix();
+    });
+
+    // Toggle Preview feature
+    toggleMatrixPreviewBtn.addEventListener('click', () => {
+        matrixPreviewContainer.classList.toggle('hidden');
+    });
+    closeMatrixPreviewBtn.addEventListener('click', () => {
+        matrixPreviewContainer.classList.add('hidden');
+    });
+
+    // Initialize rendering
+    renderMatrix();
 
     // ─── Draft Plans (Modal) ───
+    const formatPriceWithYen = (val) => {
+        if (!val) return '';
+        const v = val.trim();
+        return (v.endsWith('円') || v.includes('円')) ? v : `${v}円`;
+    };
+
     const renderDraftPlans = () => {
         modalPlanList.innerHTML = '';
         draftPlans.forEach((plan, index) => {
@@ -265,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
             li.className = 'plan-item';
             li.innerHTML = `
                 <div class="plan-info">
-                    <span class="plan-name">${plan.name}</span>
+                    <span class="plan-name">${plan.url ? `<a href="${plan.url}" target="_blank">${plan.name}</a>` : plan.name}</span>
                     ${plan.price ? `<span class="plan-price">${plan.price}</span>` : ''}
                 </div>
                 <button class="icon-btn delete-btn" style="min-width:28px;height:28px;"><i class="ph ph-trash"></i></button>
@@ -278,7 +394,15 @@ document.addEventListener('DOMContentLoaded', () => {
     addPlanBtn.addEventListener('click', () => {
         const name = planNameInput.value.trim();
         if (!name) return;
-        draftPlans.push({ id: generateId(), name, price: planPriceInput.value.trim() });
+        const price = formatPriceWithYen(planPriceInput.value);
+        draftPlans.push({
+            id: generateId(),
+            name,
+            url: '', // Modals don't have URL input yet but could, leaving empty for now
+            price,
+            isChecked: false,
+            isFavorite: false
+        });
         planNameInput.value = '';
         planPriceInput.value = '';
         renderDraftPlans();
@@ -536,16 +660,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     <ul class="plan-list" style="${rest.plans && rest.plans.length > 0 ? '' : 'display:none;'}">
                         ${(rest.plans || []).map((p, pIndex) => `
                             <li class="plan-item">
+                                <input type="checkbox" class="plan-checkbox toggle-plan-check" data-rest-id="${rest.id}" data-plan-index="${pIndex}" ${p.isChecked ? 'checked' : ''}>
                                 <div class="plan-info">
-                                    <span class="plan-name">${p.name}</span>
+                                    <span class="plan-name">${p.url ? `<a href="${p.url}" target="_blank">${p.name} <i class="ph ph-arrow-square-out" style="font-size:0.75rem;opacity:0.5"></i></a>` : p.name}</span>
                                     ${p.price ? `<span class="plan-price">${p.price}</span>` : ''}
                                 </div>
-                                <button class="icon-btn delete-plan-btn" data-rest-id="${rest.id}" data-plan-index="${pIndex}" style="min-width:28px;height:28px;border:none;background:transparent;color:var(--danger);"><i class="ph ph-x"></i></button>
+                                <div style="display:flex; align-items:center; gap:0.2rem;">
+                                    <button class="plan-star-btn toggle-plan-star ${p.isFavorite ? 'is-favorite' : ''}" data-rest-id="${rest.id}" data-plan-index="${pIndex}">
+                                        <i class="${p.isFavorite ? 'ph-fill' : 'ph'} ph-star"></i>
+                                    </button>
+                                    <button class="icon-btn delete-plan-btn" data-rest-id="${rest.id}" data-plan-index="${pIndex}" style="min-width:28px;height:28px;border:none;background:transparent;color:var(--danger);"><i class="ph ph-x"></i></button>
+                                </div>
                             </li>`).join('')}
                     </ul>
                     <div class="inline-plan-form">
-                        <input type="text" placeholder="プラン名" class="inline-plan-name" style="flex:2">
-                        <input type="text" placeholder="金額(任意)" class="inline-plan-price" style="flex:1">
+                        <input type="text" placeholder="プラン名" class="inline-plan-name">
+                        <input type="text" placeholder="URL(任意)" class="inline-plan-url">
+                        <input type="text" placeholder="金額(任意)" class="inline-plan-price">
                         <button class="icon-btn inline-add-plan" data-id="${rest.id}"><i class="ph ph-plus"></i></button>
                     </div>
                 </div>`;
@@ -582,14 +713,16 @@ document.addEventListener('DOMContentLoaded', () => {
             card.querySelector('.inline-add-plan').addEventListener('click', (e) => {
                 const id = e.currentTarget.getAttribute('data-id');
                 const nameInp = card.querySelector('.inline-plan-name');
+                const urlInp = card.querySelector('.inline-plan-url');
                 const priceInp = card.querySelector('.inline-plan-price');
                 const name = nameInp.value.trim();
-                const price = priceInp.value.trim();
+                const url = urlInp.value.trim();
+                const price = formatPriceWithYen(priceInp.value);
                 if (name) {
                     const targetRest = restaurants.find(r => r.id === id);
                     if (targetRest) {
                         targetRest.plans = targetRest.plans || [];
-                        targetRest.plans.push({ id: generateId(), name, price });
+                        targetRest.plans.push({ id: generateId(), name, url, price, isChecked: false, isFavorite: false });
                         renderRestaurants();
                     }
                 }
@@ -601,6 +734,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetRest = restaurants.find(r => r.id === rId);
                     if (targetRest && targetRest.plans) {
                         targetRest.plans.splice(pIdx, 1);
+                        renderRestaurants();
+                    }
+                });
+            });
+            card.querySelectorAll('.toggle-plan-check').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const rId = e.target.getAttribute('data-rest-id');
+                    const pIdx = parseInt(e.target.getAttribute('data-plan-index'), 10);
+                    const targetRest = restaurants.find(r => r.id === rId);
+                    if (targetRest && targetRest.plans) {
+                        targetRest.plans[pIdx].isChecked = e.target.checked;
+                        renderRestaurants();
+                    }
+                });
+            });
+            card.querySelectorAll('.toggle-plan-star').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const rId = e.currentTarget.getAttribute('data-rest-id');
+                    const pIdx = parseInt(e.currentTarget.getAttribute('data-plan-index'), 10);
+                    const targetRest = restaurants.find(r => r.id === rId);
+                    if (targetRest && targetRest.plans) {
+                        targetRest.plans[pIdx].isFavorite = !targetRest.plans[pIdx].isFavorite;
                         renderRestaurants();
                     }
                 });

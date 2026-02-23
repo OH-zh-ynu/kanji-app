@@ -331,6 +331,26 @@ body {
   transform: none;
 }
 
+.secondary-btn {
+  background: var(--surface);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.15s;
+}
+
+.secondary-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--text-muted);
+}
+
 /* ─── Tags ─── */
 .tag-list {
   list-style: none;
@@ -600,15 +620,56 @@ body {
   font-size: 0.85rem;
 }
 
+.plan-name a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.plan-name a:hover {
+  text-decoration: underline;
+}
+
 .participant-note,
 .plan-price {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
 
+.plan-checkbox {
+  margin-right: 0.5rem;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+.plan-star-btn {
+  color: var(--border);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.plan-star-btn:hover {
+  color: #fbbf24;
+}
+
+.plan-star-btn.is-favorite {
+  color: #fbbf24;
+}
+
+.plan-star-btn i {
+  font-size: 1.1rem;
+}
+
 .inline-plan-form {
   display: grid;
-  grid-template-columns: 2fr 1fr 34px;
+  grid-template-columns: 2fr 2fr 1.5fr 34px;
   gap: 0.4rem;
   margin-top: 0.5rem;
   align-items: stretch;
@@ -684,6 +745,124 @@ input:checked+.slider:before {
 
 .hidden {
   display: none !important;
+}
+
+/* ─── Matrix Table ─── */
+.matrix-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.participant-matrix {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.participant-matrix th,
+.participant-matrix td {
+  border: 1px solid var(--border-light);
+  padding: 0.4rem;
+  text-align: center;
+  min-width: 60px;
+}
+
+.participant-matrix th {
+  background: var(--surface-hover);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.participant-matrix th:first-child {
+  min-width: 80px;
+  text-align: left;
+}
+
+.participant-matrix input {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 0.2rem;
+  text-align: center;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--text-main);
+  border-radius: 2px;
+}
+
+.participant-matrix th:first-child input {
+  text-align: left;
+  font-weight: 600;
+}
+
+.participant-matrix input:focus {
+  outline: none;
+  background: var(--bg);
+  border-color: var(--primary);
+}
+
+.participant-matrix.readonly input {
+  pointer-events: none;
+}
+
+.row-delete-btn,
+.col-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 2px;
+  font-size: 0.7rem;
+}
+
+.row-delete-btn:hover,
+.col-delete-btn:hover {
+  opacity: 1;
+}
+
+/* ─── Matrix Preview ─── */
+.matrix-preview-container {
+  position: absolute;
+  top: 70px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xl);
+  padding: 1rem;
+  z-index: 50;
+  max-width: 500px;
+  animation: slideInPreview 0.2s ease-out;
+}
+
+@keyframes slideInPreview {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.matrix-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.matrix-preview-header h4 {
+  font-size: 0.9rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 /* ─── Modal ─── */
