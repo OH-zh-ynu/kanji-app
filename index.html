@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幹事スマートアシスト</title>
+  <meta name="description" content="飲み会の幹事のための候補店管理・条件チェックツール">
+  <link rel="stylesheet" href="styles.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1><i class="ph ph-champagne"></i> 幹事スマートアシスト</h1>
+      <p>飲み会の候補店・条件を一元管理</p>
+    </header>
+
+    <main class="main-content">
+      <!-- Left Panel -->
+      <section class="panel side-panel">
+        <h2><i class="ph ph-notebook"></i> 条件・メモ</h2>
+
+        <div class="form-group border-bottom-section">
+          <label for="general-memo">全体メモ</label>
+          <textarea id="general-memo" placeholder="例: 10人参加予定、金曜19時開始希望..."></textarea>
+        </div>
+
+        <div class="condition-section border-bottom-section">
+          <h3><i class="ph ph-currency-jpy"></i> 予算目安</h3>
+          <div class="input-group" style="align-items: center;">
+            <select id="budget-min" class="budget-select">
+              <option value="">下限なし</option>
+              <option value="B009">～1000円</option>
+              <option value="B010">1001～1500円</option>
+              <option value="B011">1501～2000円</option>
+              <option value="B001">2001～3000円</option>
+              <option value="B002">3001～4000円</option>
+              <option value="B003">4001～5000円</option>
+              <option value="B008">5001～7000円</option>
+              <option value="B004">7001～10000円</option>
+              <option value="B005">10001～15000円</option>
+              <option value="B006">15001～20000円</option>
+            </select>
+            <span style="color:var(--text-muted)">〜</span>
+            <select id="budget-max" class="budget-select">
+              <option value="">上限なし</option>
+              <option value="B009">～1000円</option>
+              <option value="B010">1001～1500円</option>
+              <option value="B011">1501～2000円</option>
+              <option value="B001">2001～3000円</option>
+              <option value="B002">3001～4000円</option>
+              <option value="B003">4001～5000円</option>
+              <option value="B008">5001～7000円</option>
+              <option value="B004">7001～10000円</option>
+              <option value="B005">10001～15000円</option>
+              <option value="B006">15001～20000円</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="condition-section">
+          <h3><i class="ph ph-star"></i> 必須条件・希望 <span
+              style="font-size:0.7rem;font-weight:normal;color:var(--text-muted);">(自動検索対象)</span></h3>
+          <div class="input-group">
+            <input type="text" id="request-input" placeholder="例: 個室あり, 飲み放題, 新宿">
+            <button id="add-request-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="request-list" class="tag-list"></ul>
+        </div>
+
+        <div class="condition-section">
+          <h3><i class="ph ph-list-checks"></i> 店舗確認用リスト <span
+              style="font-size:0.7rem;font-weight:normal;color:var(--text-muted);">(検索には不使用)</span></h3>
+          <div class="input-group">
+            <input type="text" id="manual-input" placeholder="例: プロジェクターあり, 喫煙可">
+            <button id="add-manual-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="manual-list" class="tag-list manual-tags"></ul>
+        </div>
+
+        <div class="condition-section">
+          <h3><i class="ph ph-warning-circle"></i> NG・アレルギー</h3>
+          <div class="input-group">
+            <input type="text" id="ng-input" placeholder="例: エビ, 辛いもの">
+            <button id="add-ng-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="ng-list" class="tag-list danger-tags"></ul>
+        </div>
+
+        <div class="condition-section">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3><i class="ph ph-users-three"></i> 参加者リスト</h3>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-participants">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div id="participants-container" class="hidden">
+            <div class="input-group" style="margin-top: 0.5rem;">
+              <input type="text" id="participant-name-input" placeholder="名前">
+              <input type="text" id="participant-note-input" placeholder="メモ (任意)">
+              <button id="add-participant-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+            </div>
+            <ul id="participant-list" class="participant-list"></ul>
+          </div>
+        </div>
+
+        <button id="auto-search-btn" class="search-btn">
+          <i class="ph ph-magnifying-glass"></i> 条件に合うお店を自動検索
+        </button>
+      </section>
+
+      <!-- Right Panel -->
+      <section class="main-panel">
+        <div class="panel panel-header">
+          <h2><i class="ph ph-storefront"></i> 候補店リスト</h2>
+          <button id="add-restaurant-btn" class="primary-btn"><i class="ph ph-plus"></i> 手動で追加</button>
+        </div>
+
+        <div id="restaurant-list" class="restaurant-grid"></div>
+
+        <div id="empty-state" class="empty-state">
+          <i class="ph ph-wine"></i>
+          <p>候補店がまだありません。<br>手動で追加するか、条件を入力して自動検索してみましょう。</p>
+        </div>
+
+        <div class="api-credit">
+          Powered by <a href="http://webservice.recruit.co.jp/" target="_blank">ホットペッパーグルメ Webサービス</a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="restaurant-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>候補店を追加</h3>
+        <button id="close-modal-btn" class="icon-btn"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group border-bottom-section"
+          style="background: var(--primary-light); padding: 1rem; border-radius: var(--radius-sm); margin-bottom: 0.5rem; border: none;">
+          <label style="color: var(--primary); font-weight: 600;"><i class="ph ph-magnifying-glass"></i>
+            APIから自動入力</label>
+          <div class="input-group">
+            <input type="text" id="manual-api-search" placeholder="店名やキーワード（例: 新宿 鳥貴族）">
+            <button id="manual-api-btn" class="primary-btn" style="padding: 0 1rem;">検索</button>
+          </div>
+          <ul id="manual-api-results" class="api-results-list hidden"></ul>
+        </div>
+
+        <div class="form-group">
+          <label>店名 *</label>
+          <input type="text" id="rest-name" placeholder="お店の名前">
+        </div>
+        <div class="form-group">
+          <label>URL (任意)</label>
+          <input type="url" id="rest-url" placeholder="https://...">
+        </div>
+        <div class="form-group-row">
+          <div class="form-group" style="flex:1">
+            <label>予算目安</label>
+            <input type="text" id="rest-price" placeholder="例: ¥4,000">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>特徴・ジャンル</label>
+            <input type="text" id="rest-feature" placeholder="例: 和食, 景色が良い">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>アクセス・最寄駅</label>
+          <input type="text" id="rest-access" placeholder="例: 新宿駅東口から徒歩3分">
+        </div>
+        <div class="form-group">
+          <label>プラン (任意)</label>
+          <div class="input-group">
+            <input type="text" id="plan-name-input" placeholder="プラン名">
+            <input type="text" id="plan-price-input" placeholder="料金" style="max-width: 120px;">
+            <button id="add-plan-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="modal-plan-list" class="plan-list"></ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-restaurant-btn" class="primary-btn">保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Results Preview Modal -->
+  <div id="results-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3><i class="ph ph-list-magnifying-glass"></i> 検索結果（追加する店舗を選択）</h3>
+        <button id="close-results-btn" class="icon-btn"><i class="ph ph-x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group"
+          style="flex-direction: row; justify-content: space-between; align-items: center; background: var(--surface-hover); padding: 0.75rem; border-radius: var(--radius-sm);">
+          <label class="check-label"
+            style="font-weight: 600; font-size: 0.9rem; margin: 0; color: var(--text-main); cursor: pointer;">
+            <input type="checkbox" id="select-all-results" class="toggle-checkbox" checked>
+            <span style="margin-left: 0.5rem;">すべて選択 / 解除</span>
+          </label>
+          <span id="results-count-badge" class="tag-item" style="margin:0;">0件ヒット</span>
+        </div>
+        <ul id="results-preview-list" class="results-preview-list"></ul>
+      </div>
+      <div class="modal-footer">
+        <button id="add-selected-results-btn" class="primary-btn">選択した店舗を追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
