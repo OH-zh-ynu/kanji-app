@@ -62,10 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const addMatrixColBtn = document.getElementById('add-matrix-col-btn');
     const addMatrixRowBtn = document.getElementById('add-matrix-row-btn');
     const participantMatrix = document.getElementById('participant-matrix');
-    const toggleMatrixPreviewBtn = document.getElementById('toggle-matrix-preview-btn');
-    const matrixPreviewContainer = document.getElementById('matrix-preview-container');
-    const previewMatrixTable = document.getElementById('preview-matrix-table');
-    const closeMatrixPreviewBtn = document.getElementById('close-matrix-preview-btn');
 
     const emptyState = document.getElementById('empty-state');
 
@@ -162,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         reqInput.value = ''; // clear early
         autoSearchBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> API準備中...';
         autoSearchBtn.disabled = true;
+        autoSearchBtn.classList.add('btn-loading');
 
         let removeToast = null;
         if (parts.length > 0) {
@@ -187,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         autoSearchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i> 条件に合うお店を自動検索';
         autoSearchBtn.disabled = false;
+        autoSearchBtn.classList.remove('btn-loading');
         if (removeToast) {
             removeToast();
             createToast('キーワードを追加しました', 'success');
@@ -240,22 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Matrix Logic ───
     toggleParticipants.addEventListener('change', (e) => {
         participantsContainer.classList.toggle('hidden', !e.target.checked);
-        if (e.target.checked) {
-            toggleMatrixPreviewBtn.classList.remove('hidden');
-        } else {
-            toggleMatrixPreviewBtn.classList.add('hidden');
-            matrixPreviewContainer.classList.add('hidden');
-        }
     });
-
-    const updatePreviewMatrix = () => {
-        previewMatrixTable.innerHTML = participantMatrix.innerHTML;
-        // Strip inputs and just show text in preview for cleaner look
-        previewMatrixTable.querySelectorAll('input').forEach(inp => {
-            inp.parentElement.textContent = inp.value;
-        });
-        previewMatrixTable.querySelectorAll('button').forEach(btn => btn.remove());
-    };
 
     const renderMatrix = () => {
         participantMatrix.innerHTML = '';
@@ -342,8 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderMatrix();
             });
         });
-
-        updatePreviewMatrix();
     };
 
     addMatrixColBtn.addEventListener('click', () => {
@@ -354,14 +335,6 @@ document.addEventListener('DOMContentLoaded', () => {
     addMatrixRowBtn.addEventListener('click', () => {
         matrix.rows.push(`条件${matrix.rows.length + 1}`);
         renderMatrix();
-    });
-
-    // Toggle Preview feature
-    toggleMatrixPreviewBtn.addEventListener('click', () => {
-        matrixPreviewContainer.classList.toggle('hidden');
-    });
-    closeMatrixPreviewBtn.addEventListener('click', () => {
-        matrixPreviewContainer.classList.add('hidden');
     });
 
     // Initialize rendering
@@ -444,6 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         autoSearchBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> 検索中...';
         autoSearchBtn.disabled = true;
+        autoSearchBtn.classList.add('btn-loading');
         const removeToast = createToast('中継サーバーを利用して店舗データを取得中...', 'loading');
 
         try {
@@ -519,6 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
             removeToast();
             autoSearchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i> 条件に合うお店を自動検索';
             autoSearchBtn.disabled = false;
+            autoSearchBtn.classList.remove('btn-loading');
         }
     };
 
@@ -660,7 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <ul class="plan-list" style="${rest.plans && rest.plans.length > 0 ? '' : 'display:none;'}">
                         ${(rest.plans || []).map((p, pIndex) => `
                             <li class="plan-item">
-                                <input type="checkbox" class="plan-checkbox toggle-plan-check" data-rest-id="${rest.id}" data-plan-index="${pIndex}" ${p.isChecked ? 'checked' : ''}>
                                 <div class="plan-info">
                                     <span class="plan-name">${p.url ? `<a href="${p.url}" target="_blank">${p.name} <i class="ph ph-arrow-square-out" style="font-size:0.75rem;opacity:0.5"></i></a>` : p.name}</span>
                                     ${p.price ? `<span class="plan-price">${p.price}</span>` : ''}
@@ -734,17 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const targetRest = restaurants.find(r => r.id === rId);
                     if (targetRest && targetRest.plans) {
                         targetRest.plans.splice(pIdx, 1);
-                        renderRestaurants();
-                    }
-                });
-            });
-            card.querySelectorAll('.toggle-plan-check').forEach(cb => {
-                cb.addEventListener('change', (e) => {
-                    const rId = e.target.getAttribute('data-rest-id');
-                    const pIdx = parseInt(e.target.getAttribute('data-plan-index'), 10);
-                    const targetRest = restaurants.find(r => r.id === rId);
-                    if (targetRest && targetRest.plans) {
-                        targetRest.plans[pIdx].isChecked = e.target.checked;
                         renderRestaurants();
                     }
                 });

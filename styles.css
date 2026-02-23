@@ -278,28 +278,48 @@ body {
   background: var(--primary);
   color: white;
   border: none;
-  padding: 0.6rem 1.25rem;
+  padding: 0.6rem 1.2rem;
   border-radius: var(--radius-sm);
   font-weight: 500;
-  font-size: 0.875rem;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  transition: all 0.15s;
-  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.3);
-  white-space: nowrap;
+  gap: 0.5rem;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .primary-btn:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
+  background: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-.primary-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.primary-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes btn-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+    transform: scale(0.98);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+    transform: scale(1);
+  }
+}
+
+.btn-loading {
+  animation: btn-pulse 1.5s infinite var(--ease-spring) !important;
+  opacity: 0.9 !important;
+  cursor: wait !important;
+  pointer-events: none;
 }
 
 .search-btn {
@@ -821,48 +841,6 @@ input:checked+.slider:before {
 .row-delete-btn:hover,
 .col-delete-btn:hover {
   opacity: 1;
-}
-
-/* ─── Matrix Preview ─── */
-.matrix-preview-container {
-  position: absolute;
-  top: 70px;
-  right: 20px;
-  background: var(--surface);
-  border: 1px solid var(--primary);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-xl);
-  padding: 1rem;
-  z-index: 50;
-  max-width: 500px;
-  animation: slideInPreview 0.2s ease-out;
-}
-
-@keyframes slideInPreview {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.matrix-preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.matrix-preview-header h4 {
-  font-size: 0.9rem;
-  color: var(--primary);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
 }
 
 /* ─── Modal ─── */

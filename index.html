@@ -126,8 +126,6 @@
         <div class="panel panel-header">
           <div style="display:flex; align-items:center; gap:1rem;">
             <h2><i class="ph ph-storefront"></i> 候補店リスト</h2>
-            <button id="toggle-matrix-preview-btn" class="secondary-btn hidden"><i class="ph ph-table"></i>
-              表を確認</button>
           </div>
           <button id="add-restaurant-btn" class="primary-btn"><i class="ph ph-plus"></i> 手動で追加</button>
         </div>
@@ -225,20 +223,6 @@
       <div class="modal-footer">
         <button id="add-selected-results-btn" class="primary-btn">選択した店舗を追加する</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Matrix Preview Overlay -->
-  <div id="matrix-preview-container" class="matrix-preview-container hidden">
-    <div class="matrix-preview-header">
-      <h4><i class="ph ph-table"></i> 参加者条件メモ</h4>
-      <button id="close-matrix-preview-btn" class="icon-btn"
-        style="width:28px;height:28px;min-width:28px;border:none;"><i class="ph ph-x"></i></button>
-    </div>
-    <div class="matrix-wrapper">
-      <table id="preview-matrix-table" class="participant-matrix readonly">
-        <!-- Cloned by JS -->
-      </table>
     </div>
   </div>
 
