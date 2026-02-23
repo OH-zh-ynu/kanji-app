@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // ─── State ───
     let requests = [];
+    let manuals = [];
     let ngs = [];
     let restaurants = [];
     let participants = [];
@@ -10,9 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const reqInput = document.getElementById('request-input');
     const addReqBtn = document.getElementById('add-request-btn');
     const reqList = document.getElementById('request-list');
+    const manualInput = document.getElementById('manual-input');
+    const addManualBtn = document.getElementById('add-manual-btn');
+    const manualList = document.getElementById('manual-list');
     const ngInput = document.getElementById('ng-input');
     const addNgBtn = document.getElementById('add-ng-btn');
     const ngList = document.getElementById('ng-list');
+
+    const budgetMin = document.getElementById('budget-min');
+    const budgetMax = document.getElementById('budget-max');
     const restList = document.getElementById('restaurant-list');
     const addRestBtn = document.getElementById('add-restaurant-btn');
     const modal = document.getElementById('restaurant-modal');
@@ -46,15 +53,93 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // ─── Tags ───
-    const renderTags = (arr, container, isDanger) => {
+    // ─── Keyword Validation & Dictionary ───
+    const synonymDict = {
+        'のみほうだい': '飲み放題', 'のみほ': '飲み放題',
+        'たべほうだい': '食べ放題', 'たべほ': '食べ放題',
+        'やきにく': '焼肉',
+        'こしつ': '個室',
+        'えきつか': '駅近', 'えきちか': '駅近',
+        'じょしかい': '女子会',
+        'わしょく': '和食',
+        'ちゅうか': '中華',
+        'いたりあん': 'イタリアン',
+        'ふれんち': 'フレンチ'
+    };
+
+    const checkKeywordValidity = async (keyword) => {
+        const apiKey = 'f15b7ad9efab6381';
+        const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}&format=json&count=1`;
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+        try {
+            const res = await fetch(proxyUrl);
+            if (!res.ok) return true; // Fail silently if proxy is down
+            const data = await res.json();
+            return data.results && data.results.shop && data.results.shop.length > 0;
+        } catch (e) {
+            return true;
+        }
+    };
+
+    const addRequest = async (val) => {
+        const cleanVal = val.trim();
+        if (!cleanVal) return;
+
+        reqInput.value = ''; // clear early
+        autoSearchBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> ワード確認中...';
+        autoSearchBtn.disabled = true;
+
+        const isValid = await checkKeywordValidity(cleanVal);
+
+        autoSearchBtn.innerHTML = '<i class="ph ph-magnifying-glass"></i> 条件に合うお店を自動検索';
+        autoSearchBtn.disabled = false;
+
+        if (!isValid) {
+            const suggestion = synonymDict[cleanVal];
+            let msg = `「${cleanVal}」はホットペッパーで検索結果が見つからない可能性があります。`;
+            if (suggestion) {
+                if (confirm(`${msg}\n\nもしかして：「${suggestion}」ですか？\n「OK」を押すと「${suggestion}」を追加します。`)) {
+                    requests.push(suggestion);
+                    renderTags(requests, reqList, 'req');
+                }
+            } else {
+                alert(`${msg}\n検索にはヒットしないため、店舗確認用リスト（検索不使用）への追加をおすすめします。`);
+            }
+            return;
+        }
+
+        requests.push(cleanVal);
+        renderTags(requests, reqList, 'req');
+    };
+
+    const removeRequest = (idx) => { requests.splice(idx, 1); renderTags(requests, reqList, 'req'); };
+
+    const addManual = (val) => {
+        if (!val.trim()) return;
+        manuals.push(val.trim());
+        manualInput.value = '';
+        renderTags(manuals, manualList, 'manual');
+    };
+    const removeManual = (idx) => { manuals.splice(idx, 1); renderTags(manuals, manualList, 'manual'); };
+
+    const addNg = (val) => {
+        if (!val.trim()) return;
+        ngs.push(val.trim());
+        ngInput.value = '';
+        renderTags(ngs, ngList, 'ng');
+    };
+    const removeNg = (idx) => { ngs.splice(idx, 1); renderTags(ngs, ngList, 'ng'); };
+
+    const renderTags = (arr, container, type) => {
         container.innerHTML = '';
         arr.forEach((item, index) => {
             const li = document.createElement('li');
             li.className = 'tag-item';
             li.innerHTML = `${item} <button data-index="${index}"><i class="ph ph-x"></i></button>`;
             li.querySelector('button').addEventListener('click', () => {
-                if (isDanger) removeNg(index);
+                if (type === 'ng') removeNg(index);
+                else if (type === 'manual') removeManual(index);
                 else removeRequest(index);
             });
             container.appendChild(li);
@@ -62,23 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
         renderRestaurants();
     };
 
-    const addRequest = (val) => {
-        if (!val.trim()) return;
-        requests.push(val.trim());
-        reqInput.value = '';
-        renderTags(requests, reqList, false);
-    };
-    const removeRequest = (idx) => { requests.splice(idx, 1); renderTags(requests, reqList, false); };
-    const addNg = (val) => {
-        if (!val.trim()) return;
-        ngs.push(val.trim());
-        ngInput.value = '';
-        renderTags(ngs, ngList, true);
-    };
-    const removeNg = (idx) => { ngs.splice(idx, 1); renderTags(ngs, ngList, true); };
-
     addReqBtn.addEventListener('click', () => addRequest(reqInput.value));
     reqInput.addEventListener('keypress', (e) => e.key === 'Enter' && addRequest(reqInput.value));
+    addManualBtn.addEventListener('click', () => addManual(manualInput.value));
+    manualInput.addEventListener('keypress', (e) => e.key === 'Enter' && addManual(manualInput.value));
     addNgBtn.addEventListener('click', () => addNg(ngInput.value));
     ngInput.addEventListener('keypress', (e) => e.key === 'Enter' && addNg(ngInput.value));
 
@@ -146,16 +218,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ─── Auto Search (Hotpepper API) ───
     const handleAutoSearch = async () => {
-        // Build a focused keyword string from ONLY the request tags
-        // The memo is for the user's own notes, not for API search
-        if (requests.length === 0) {
-            alert('「必須条件・希望」に検索キーワード（例: 新宿 個室）を追加してください。');
+        if (requests.length === 0 && !budgetMin.value && !budgetMax.value) {
+            alert('「必須条件・希望」か「予算」のいずれかを指定してください。');
             return;
         }
 
         const keyword = requests.join(' ');
         const apiKey = 'f15b7ad9efab6381';
-        const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}&format=json&count=10`;
+
+        // Parse budget
+        // Note: Hotpepper API doesn't perfectly support ranges, but we can pass multiple budget codes
+        // For simplicity, we'll pass the min/max if selected, or just pick the budget code. 
+        // If they pick a range, we can just pass the codes between min and max.
+        const allBudgetCodes = ['B009', 'B010', 'B011', 'B001', 'B002', 'B003', 'B008', 'B004', 'B005', 'B006'];
+        let budgetQuery = '';
+        if (budgetMin.value || budgetMax.value) {
+            let startIndex = budgetMin.value ? allBudgetCodes.indexOf(budgetMin.value) : 0;
+            let endIndex = budgetMax.value ? allBudgetCodes.indexOf(budgetMax.value) : allBudgetCodes.length - 1;
+
+            if (startIndex > endIndex) {
+                alert('予算の金額設定が正しくありません。\n上限は下限より高い金額を設定してください。');
+                return;
+            }
+
+            const selectedCodes = allBudgetCodes.slice(startIndex, endIndex + 1);
+            budgetQuery = selectedCodes.map(code => `&budget=${code}`).join('');
+        }
+
+        const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}${budgetQuery}&format=json&count=10`;
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
         autoSearchBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> 検索中...';
@@ -175,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         price: (shop.budget && shop.budget.name) || '',
                         feature: shop.catch || (shop.genre && shop.genre.name) || '',
                         access: shop.mobile_access || shop.access || '',
+                        isFavorite: false,
                         checks: {},
                         plans: []
                     });
@@ -220,6 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
             price: restPriceInput.value.trim(),
             feature: restFeatureInput.value.trim(),
             access: restAccessInput.value.trim(),
+            isFavorite: false,
             checks: {},
             plans: [...draftPlans]
         });
@@ -242,11 +334,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (rest) rest.checks[checkKey] = isChecked;
     };
 
+    const toggleFavorite = (id) => {
+        const rest = restaurants.find(r => r.id === id);
+        if (rest) {
+            rest.isFavorite = !rest.isFavorite;
+            renderRestaurants(); // Re-render triggers sorting
+        }
+    };
+
     const renderRestaurants = () => {
         restList.innerHTML = '';
         updateEmptyState();
 
-        restaurants.forEach(rest => {
+        // Sort restaurants: favorites first
+        const sortedRestaurants = [...restaurants].sort((a, b) => {
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+            return 0;
+        });
+
+        sortedRestaurants.forEach(rest => {
             const card = document.createElement('div');
             card.className = 'rest-card';
 
@@ -258,16 +365,21 @@ document.addEventListener('DOMContentLoaded', () => {
             let checksHtml = '';
             const allConditions = [
                 ...requests.map(r => ({ type: 'req', text: r })),
+                ...manuals.map(m => ({ type: 'manual', text: m })),
                 ...ngs.map(n => ({ type: 'ng', text: n }))
             ];
             if (allConditions.length > 0) {
                 checksHtml = `
                     <div class="rest-check-section">
-                        <h4><i class="ph ph-check-square-offset"></i> 条件チェック</h4>
+                        <h4><i class="ph ph-check-square-offset"></i> 確認リスト</h4>
                         ${allConditions.map(cond => {
                     const checkKey = `${cond.type}_${cond.text}`;
                     const isChecked = rest.checks[checkKey] || false;
-                    const icon = cond.type === 'req' ? '<i class="ph ph-star"></i>' : '<i class="ph ph-warning-circle"></i>';
+                    let icon = '<i class="ph ph-check"></i>';
+                    if (cond.type === 'req') icon = '<i class="ph ph-star"></i>';
+                    if (cond.type === 'ng') icon = '<i class="ph ph-warning-circle"></i>';
+                    if (cond.type === 'manual') icon = '<i class="ph ph-list-checks"></i>';
+
                     const cls = cond.type === 'ng' ? 'danger-text' : '';
                     return `<div class="check-item">
                                 <span class="check-label ${cls}">${icon} ${cond.text}</span>
@@ -308,7 +420,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     <div class="rest-actions">
-                        <button class="icon-btn delete-btn" data-id="${rest.id}"><i class="ph ph-trash"></i></button>
+                        <button class="icon-btn fav-btn ${rest.isFavorite ? 'is-favorite' : ''}" data-id="${rest.id}">
+                            <i class="${rest.isFavorite ? 'ph-fill' : 'ph'} ph-star"></i>
+                        </button>
+                        <button class="icon-btn delete-btn" data-id="${rest.id}">
+                            <i class="ph ph-trash"></i>
+                        </button>
                     </div>
                 </div>
                 ${plansHtml}
@@ -317,6 +434,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             card.querySelector('.delete-btn').addEventListener('click', (e) => {
                 deleteRestaurant(e.currentTarget.getAttribute('data-id'));
+            });
+            card.querySelector('.fav-btn').addEventListener('click', (e) => {
+                toggleFavorite(e.currentTarget.getAttribute('data-id'));
             });
             card.querySelectorAll('.condition-toggle').forEach(cb => {
                 cb.addEventListener('change', (e) => {

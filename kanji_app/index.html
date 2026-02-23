@@ -25,18 +25,62 @@
       <section class="panel side-panel">
         <h2><i class="ph ph-notebook"></i> 条件・メモ</h2>
 
-        <div class="form-group">
+        <div class="form-group border-bottom-section">
           <label for="general-memo">全体メモ</label>
           <textarea id="general-memo" placeholder="例: 10人参加予定、金曜19時開始希望..."></textarea>
         </div>
 
+        <div class="condition-section border-bottom-section">
+          <h3><i class="ph ph-currency-jpy"></i> 予算目安</h3>
+          <div class="input-group" style="align-items: center;">
+            <select id="budget-min" class="budget-select">
+              <option value="">下限なし</option>
+              <option value="B009">～1000円</option>
+              <option value="B010">1001～1500円</option>
+              <option value="B011">1501～2000円</option>
+              <option value="B001">2001～3000円</option>
+              <option value="B002">3001～4000円</option>
+              <option value="B003">4001～5000円</option>
+              <option value="B008">5001～7000円</option>
+              <option value="B004">7001～10000円</option>
+              <option value="B005">10001～15000円</option>
+              <option value="B006">15001～20000円</option>
+            </select>
+            <span style="color:var(--text-muted)">〜</span>
+            <select id="budget-max" class="budget-select">
+              <option value="">上限なし</option>
+              <option value="B009">～1000円</option>
+              <option value="B010">1001～1500円</option>
+              <option value="B011">1501～2000円</option>
+              <option value="B001">2001～3000円</option>
+              <option value="B002">3001～4000円</option>
+              <option value="B003">4001～5000円</option>
+              <option value="B008">5001～7000円</option>
+              <option value="B004">7001～10000円</option>
+              <option value="B005">10001～15000円</option>
+              <option value="B006">15001～20000円</option>
+            </select>
+          </div>
+        </div>
+
         <div class="condition-section">
-          <h3><i class="ph ph-star"></i> 必須条件・希望</h3>
+          <h3><i class="ph ph-star"></i> 必須条件・希望 <span
+              style="font-size:0.7rem;font-weight:normal;color:var(--text-muted);">(自動検索対象)</span></h3>
           <div class="input-group">
             <input type="text" id="request-input" placeholder="例: 個室あり, 飲み放題, 新宿">
             <button id="add-request-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
           </div>
           <ul id="request-list" class="tag-list"></ul>
+        </div>
+
+        <div class="condition-section">
+          <h3><i class="ph ph-list-checks"></i> 店舗確認用リスト <span
+              style="font-size:0.7rem;font-weight:normal;color:var(--text-muted);">(検索には不使用)</span></h3>
+          <div class="input-group">
+            <input type="text" id="manual-input" placeholder="例: プロジェクターあり, 喫煙可">
+            <button id="add-manual-btn" class="icon-btn"><i class="ph ph-plus"></i></button>
+          </div>
+          <ul id="manual-list" class="tag-list manual-tags"></ul>
         </div>
 
         <div class="condition-section">
