@@ -633,17 +633,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-plans-section">
                     <h4><i class="ph ph-list-bullets"></i> プラン候補</h4>
                     <ul class="plan-list" style="${rest.plans && rest.plans.length > 0 ? '' : 'display:none;'}">
-                        ${(rest.plans || []).map((p, pIndex) => `
+                        ${(rest.plans || []).map((p, i) => ({ ...p, originalIndex: i }))
+                    .sort((a, b) => {
+                        if (a.isFavorite && !b.isFavorite) return -1;
+                        if (!a.isFavorite && b.isFavorite) return 1;
+                        return 0;
+                    })
+                    .map((p) => `
                             <li class="plan-item">
                                 <div class="plan-info">
                                     <span class="plan-name">${p.url ? `<a href="${p.url}" target="_blank">${p.name} <i class="ph ph-arrow-square-out" style="font-size:0.75rem;opacity:0.5"></i></a>` : p.name}</span>
                                     ${p.price ? `<span class="plan-price">${p.price}</span>` : ''}
                                 </div>
                                 <div style="display:flex; align-items:center; gap:0.2rem;">
-                                    <button class="plan-star-btn toggle-plan-star ${p.isFavorite ? 'is-favorite' : ''}" data-rest-id="${rest.id}" data-plan-index="${pIndex}">
+                                    <button class="plan-star-btn toggle-plan-star ${p.isFavorite ? 'is-favorite' : ''}" data-rest-id="${rest.id}" data-plan-index="${p.originalIndex}">
                                         <i class="${p.isFavorite ? 'ph-fill' : 'ph'} ph-star"></i>
                                     </button>
-                                    <button class="icon-btn delete-plan-btn" data-rest-id="${rest.id}" data-plan-index="${pIndex}" style="min-width:28px;height:28px;border:none;background:transparent;color:var(--danger);"><i class="ph ph-x"></i></button>
+                                    <button class="icon-btn delete-plan-btn" data-rest-id="${rest.id}" data-plan-index="${p.originalIndex}" style="min-width:28px;height:28px;border:none;background:transparent;color:var(--danger);"><i class="ph ph-x"></i></button>
                                 </div>
                             </li>`).join('')}
                     </ul>

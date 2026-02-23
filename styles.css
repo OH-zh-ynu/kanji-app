@@ -655,14 +655,6 @@ body {
   color: var(--text-muted);
 }
 
-.plan-checkbox {
-  margin-right: 0.5rem;
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary);
-}
-
 .plan-star-btn {
   color: var(--border);
   background: transparent;
