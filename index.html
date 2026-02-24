@@ -15,9 +15,15 @@
 
 <body>
   <div class="app-container">
-    <header class="app-header">
-      <h1><i class="ph ph-champagne"></i> 幹事スマートアシスト</h1>
-      <p>飲み会の候補店・条件を一元管理</p>
+    <header class="app-header" id="main-app-header">
+      <div id="header-brand">
+        <h1><i class="ph ph-champagne"></i> <span id="header-title-text">幹事スマートアシスト</span></h1>
+        <p id="header-subtitle-text">飲み会の候補店・条件を一元管理</p>
+      </div>
+      <div id="header-meeting-name" style="margin-top: 0.8rem;">
+        <input type="text" id="meeting-name-input" placeholder="飲み会の名前 (例: 忘年会、歓迎会)"
+          style="max-width:350px; font-size:1rem; font-weight:600; padding:0.5rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); transition: all 0.2s;">
+      </div>
     </header>
 
     <main class="main-content">
@@ -145,6 +151,14 @@
         </div>
       </section>
     </main>
+
+    <footer id="readonly-footer" class="hidden"
+      style="text-align: center; padding: 1.5rem 0; margin-top: 2rem; border-top: 1px solid var(--border-light);">
+      <p style="font-size: 0.85rem; color: var(--text-muted);">
+        Powered by <a href="?" id="footer-home-link"
+          style="color: var(--primary); text-decoration: none; font-weight: 500;">幹事スマートアシスト</a>
+      </p>
+    </footer>
   </div>
 
   <!-- Modal -->

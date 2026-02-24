@@ -78,15 +78,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const generateId = () => Math.random().toString(36).substring(2, 9);
 
     // ─── Initialization & Readonly Check ───
+    const meetingNameInput = document.getElementById('meeting-name-input');
+    const headerTitleText = document.getElementById('header-title-text');
+    const headerMeetingName = document.getElementById('header-meeting-name');
+    const readonlyFooter = document.getElementById('readonly-footer');
+
     const urlParams = new URLSearchParams(window.location.search);
     const shareData = urlParams.get('share');
     let isReadonly = false;
+    let meetingName = '';
+
     if (shareData) {
         try {
             const decoded = JSON.parse(decodeURIComponent(escape(atob(shareData))));
-            restaurants = decoded;
+            if (Array.isArray(decoded)) {
+                restaurants = decoded;
+            } else {
+                restaurants = decoded.data || [];
+                meetingName = decoded.name || '';
+            }
             document.body.classList.add('readonly-mode');
             isReadonly = true;
+
+            if (meetingName) {
+                if (headerTitleText) headerTitleText.innerText = `【${meetingName}】飲み会候補店リスト`;
+                document.title = `【${meetingName}】幹事スマートアシスト`;
+            } else {
+                if (headerTitleText) headerTitleText.innerText = '飲み会候補店リスト';
+            }
+            if (headerMeetingName) headerMeetingName.style.display = 'none';
+            if (readonlyFooter) readonlyFooter.classList.remove('hidden');
+
         } catch (e) {
             console.error('Failed to parse share data', e);
         }
@@ -418,8 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const allBudgetCodes = ['B009', 'B010', 'B011', 'B001', 'B002', 'B003', 'B008', 'B004', 'B005', 'B006'];
         let budgetQuery = '';
-        let isClientSideBudgetFilter = false;
-        let selectedCodes = [];
         if (budgetMin.value || budgetMax.value) {
             let startIndex = budgetMin.value ? allBudgetCodes.indexOf(budgetMin.value) : 0;
             let endIndex = budgetMax.value ? allBudgetCodes.indexOf(budgetMax.value) : allBudgetCodes.length - 1;
@@ -429,15 +449,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            selectedCodes = allBudgetCodes.slice(startIndex, endIndex + 1);
-            if (selectedCodes.length <= 3) {
-                budgetQuery = selectedCodes.map(code => `&budget=${code}`).join('');
-            } else {
-                isClientSideBudgetFilter = true;
-            }
+            const selectedCodes = allBudgetCodes.slice(startIndex, endIndex + 1);
+            budgetQuery = '&budget=' + selectedCodes.join(',');
         }
 
-        const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}${budgetQuery}&format=json&count=50`;
+        const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}${budgetQuery}&format=json&count=100`;
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
         autoSearchBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> 検索中...';
@@ -455,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let filteredShops = data.results.shop.filter(shop => {
                     const text = (shop.name + (shop.address || '') + (shop.catch || '') + (shop.station_name || '')).toLowerCase();
                     if (isYokohamaSearch && text.includes('新横浜')) return false;
-                    if (isClientSideBudgetFilter && shop.budget && shop.budget.code && !selectedCodes.includes(shop.budget.code)) return false;
                     return true;
                 });
 
@@ -850,10 +865,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = getShareData();
             shareTextOutput.value = generateShareText(data);
 
-            const minData = data.map(r => ({
-                id: r.id, name: r.name, url: r.url, price: r.price, feature: r.feature, access: r.access, isFavorite: r.isFavorite,
-                plans: r.plans.map(p => ({ id: p.id, name: p.name, url: p.url, price: p.price, isFavorite: true }))
-            }));
+            const minData = {
+                name: meetingNameInput ? meetingNameInput.value.trim() : "",
+                data: data.map(r => ({
+                    id: r.id, name: r.name, url: r.url, price: r.price, feature: r.feature, access: r.access, isFavorite: r.isFavorite,
+                    plans: r.plans.map(p => ({ id: p.id, name: p.name, url: p.url, price: p.price, isFavorite: true }))
+                }))
+            };
 
             try {
                 const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(minData))));
