@@ -439,7 +439,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const apiKey = 'f15b7ad9efab6381';
 
         const allBudgetCodes = ['B009', 'B010', 'B011', 'B001', 'B002', 'B003', 'B008', 'B004', 'B005', 'B006', 'B012', 'B013', 'B014'];
-        let budgetQuery = '';
+        // ─── Build budget code pairs (API allows max 2 per request) ───
+        let selectedCodes = [];
         if (budgetMin.value || budgetMax.value) {
             let startIndex = budgetMin.value ? allBudgetCodes.indexOf(budgetMin.value) : 0;
             let endIndex = budgetMax.value ? allBudgetCodes.indexOf(budgetMax.value) : allBudgetCodes.length - 1;
@@ -449,12 +450,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const selectedCodes = allBudgetCodes.slice(startIndex, endIndex + 1);
-            budgetQuery = '&budget=' + selectedCodes.join(',');
+            selectedCodes = allBudgetCodes.slice(startIndex, endIndex + 1);
         }
 
-        const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}${budgetQuery}&format=json&count=100`;
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+        // Split budget codes into chunks of 2 (API limit)
+        const budgetChunks = [];
+        if (selectedCodes.length === 0) {
+            budgetChunks.push(''); // no budget filter
+        } else {
+            for (let i = 0; i < selectedCodes.length; i += 2) {
+                const chunk = selectedCodes.slice(i, i + 2);
+                budgetChunks.push('&budget=' + chunk.join(','));
+            }
+        }
 
         autoSearchBtn.innerHTML = '<i class="ph ph-circle-notch ph-spin"></i> 検索中...';
         autoSearchBtn.disabled = true;
@@ -462,13 +470,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const removeToast = createToast('中継サーバーを利用して店舗データを取得中...', 'loading');
 
         try {
-            const data = await fetchWithRetry(proxyUrl, 2);
-            if (data.results && data.results.error) throw new Error('API_ERROR_RESPONSE');
+            // Make parallel API calls for each budget chunk
+            const fetchPromises = budgetChunks.map(bq => {
+                const targetUrl = `https://webservice.recruit.co.jp/hotpepper/gourmet/v1/?key=${apiKey}&keyword=${encodeURIComponent(keyword)}${bq}&format=json&count=100`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+                return fetchWithRetry(proxyUrl, 2);
+            });
 
-            if (data.results && data.results.shop && data.results.shop.length > 0) {
+            const results = await Promise.all(fetchPromises);
+
+            // Merge and deduplicate shops from all responses
+            const seenIds = new Set();
+            let allShops = [];
+            for (const data of results) {
+                if (data.results && data.results.error) throw new Error('API_ERROR_RESPONSE');
+                if (data.results && data.results.shop) {
+                    for (const shop of data.results.shop) {
+                        if (!seenIds.has(shop.id)) {
+                            seenIds.add(shop.id);
+                            allShops.push(shop);
+                        }
+                    }
+                }
+            }
+
+            if (allShops.length > 0) {
                 const isYokohamaSearch = requests.some(r => r.includes('横浜')) && !requests.some(r => r.includes('新横浜'));
 
-                let filteredShops = data.results.shop.filter(shop => {
+                let filteredShops = allShops.filter(shop => {
                     const text = (shop.name + (shop.address || '') + (shop.catch || '') + (shop.station_name || '')).toLowerCase();
                     if (isYokohamaSearch && text.includes('新横浜')) return false;
                     return true;
