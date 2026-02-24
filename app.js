@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const keyword = requests.join(' ');
         const apiKey = 'f15b7ad9efab6381';
 
-        const allBudgetCodes = ['B009', 'B010', 'B011', 'B001', 'B002', 'B003', 'B008', 'B004', 'B005', 'B006'];
+        const allBudgetCodes = ['B009', 'B010', 'B011', 'B001', 'B002', 'B003', 'B008', 'B004', 'B005', 'B006', 'B012', 'B013', 'B014'];
         let budgetQuery = '';
         if (budgetMin.value || budgetMax.value) {
             let startIndex = budgetMin.value ? allBudgetCodes.indexOf(budgetMin.value) : 0;
